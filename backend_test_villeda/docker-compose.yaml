@@ -1,0 +1,41 @@
+version: "3"
+services:
+  db:
+    image: mysql:8
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    ports:
+      - "3306:3306"
+    environment: 
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: "examen"
+      MYSQL_USER: "admin"
+      MYSQL_PASSWORD: "hola12345"
+  django_app:
+    build: .
+    volumes:
+      - static:/code/static
+      - .:/code
+    depends_on:
+      - db
+  celery:
+    build: .
+    command: celery worker --app=backend_test --loglevel=info
+    volumes:
+      - static:/code/static
+      - .:/code
+    depends_on:
+      - django_app
+  nginx:
+    image: nginx:1.13
+    ports:
+      - 8000:80
+    volumes:
+      - ./config/nginx/conf.d:/etc/nginx/conf.d
+      - static:/code/static
+    depends_on:
+      - django_app
+volumes:
+  .:
+  mysql_data:
+  static:  
